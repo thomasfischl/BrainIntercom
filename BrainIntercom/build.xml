@@ -1,0 +1,31 @@
+<project name="ga">
+
+
+	<target name="ga">
+		<delete dir="build" />
+		<delete file="ga.jar" failonerror="false" />
+		<mkdir dir="build" />
+		<javac srcdir="src" destdir="build" source="1.8" target="1.8" optimize="true">
+			<classpath>
+				<fileset dir="lib" includes="*.jar" />
+			</classpath>
+		</javac>
+
+		<jar destfile="ga.jar" basedir="build" />
+
+
+	</target>
+
+	<target name="run">
+		<java classname="com.github.thomasfischl.analyzer.GA" fork="true">
+			<jvmarg value="-XX:+AggressiveOpts" />
+			<jvmarg value="-XX:-PrintCompilation" />
+			<jvmarg value="-XX:-CITime" />
+			<classpath>
+				<fileset file="ga.jar" />
+				<fileset dir="lib" includes="*.jar" />
+			</classpath>
+		</java>
+	</target>
+
+</project>
