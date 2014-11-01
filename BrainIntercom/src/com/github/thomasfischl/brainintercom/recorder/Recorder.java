@@ -1,6 +1,7 @@
 package com.github.thomasfischl.brainintercom.recorder;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -13,16 +14,22 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Control;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Slider;
+import javafx.scene.control.cell.CheckBoxListCell;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
-
-import javax.sound.sampled.LineUnavailableException;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.util.StringConverter;
 
 import com.github.thomasfischl.brainintercom.provider.ArduinoDataProvider;
 import com.github.thomasfischl.brainintercom.provider.MicrophoneDataProvider;
 import com.github.thomasfischl.brainintercom.provider.RecFileDataProvider;
 import com.github.thomasfischl.brainintercom.provider.SinusDataProvider;
+import com.github.thomasfischl.brainintercom.recorder.recognize.Recognizer;
+import com.github.thomasfischl.brainintercom.recorder.recognize.RecognizerPatternStore;
 
 public class Recorder extends AnchorPane {
 
@@ -40,18 +47,25 @@ public class Recorder extends AnchorPane {
   private ComboBox<Double> cbMultiplier;
   @FXML
   private Button btnRecordEvent;
+  @FXML
+  private Button btnRefreshPatterns;
+  @FXML
+  private ListView<RecognizerPatternModel> lvPatterns;
+  @FXML
+  private Circle shapeMatch;
 
   private SpectrogramView spectrogram1 = new SpectrogramView();
   private SpectrogramView spectrogram2 = new SpectrogramView();
   private FrequencyView frequencyView = new FrequencyView();
   private SpectrogramTimeView spectrogramTimeView = new SpectrogramTimeView();
 
-  private final DataEngine recorder;
+  private final DataEngine recorder = new DataEngine();;
   private final ScheduledExecutorService pool;
+  private final Recognizer recognizer = new Recognizer();
 
   private boolean recording = false;
 
-  public Recorder() throws LineUnavailableException {
+  public Recorder() {
     FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("Recorder.fxml"));
     fxmlLoader.setRoot(this);
     fxmlLoader.setController(this);
@@ -61,6 +75,15 @@ public class Recorder extends AnchorPane {
       throw new IllegalStateException(e);
     }
 
+    pool = Executors.newScheduledThreadPool(2);
+    recorder.setRecognizer(recognizer);
+
+    initUi();
+
+    loadPatterns();
+  }
+
+  private void initUi() {
     box1.getChildren().clear();
 
     frequencyView.setWidth(600);
@@ -78,11 +101,14 @@ public class Recorder extends AnchorPane {
     box1.getChildren().addAll(spectrogramTimeView, spectrogram1);
     box2.getChildren().addAll(frequencyView, spectrogram2);
 
-    recorder = new DataEngine();
-
-    pool = Executors.newScheduledThreadPool(2);
     pool.scheduleAtFixedRate(() -> Platform.runLater(() -> updateView()), 0, 50, TimeUnit.MILLISECONDS);
-    pool.execute(() -> recorder.record());
+    pool.execute(() -> {
+      try {
+        recorder.record();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    });
 
     cbProvider.getItems().addAll("Arduino", "Microphone", "Sinus");
     cbProvider.setOnAction(e -> {
@@ -98,6 +124,44 @@ public class Recorder extends AnchorPane {
     sMultiplier.setValue(1);
     sMultiplier.valueProperty().addListener(e -> updateMultiplier(sMultiplier));
     cbMultiplier.setOnAction(e -> updateMultiplier(cbMultiplier));
+
+    setOnKeyReleased(e -> {
+      if (e.getCode() == KeyCode.S) {
+        recordEvent(null);
+      }
+    });
+
+    shapeMatch.setFill(Color.GRAY);
+  }
+
+  private void loadPatterns() {
+    lvPatterns.setCellFactory(CheckBoxListCell.forListView(RecognizerPatternModel::selectedProperty,
+        new StringConverter<RecognizerPatternModel>() {
+          @Override
+          public String toString(RecognizerPatternModel object) {
+            return object.getName();
+          }
+
+          @Override
+          public RecognizerPatternModel fromString(String string) {
+            return null;
+          }
+        }));
+
+    File patternFolder = new File("./patterns");
+    RecognizerPatternStore store = new RecognizerPatternStore();
+
+    if (patternFolder.isDirectory()) {
+      for (File f : patternFolder.listFiles()) {
+        if (f.getName().endsWith(".json")) {
+          try {
+            lvPatterns.getItems().add(new RecognizerPatternModel(store.loadPattern(f)));
+          } catch (FileNotFoundException e) {
+            e.printStackTrace();
+          }
+        }
+      }
+    }
   }
 
   private void updateMultiplier(Control ctrl) {
@@ -142,7 +206,6 @@ public class Recorder extends AnchorPane {
 
   @FXML
   private void start(ActionEvent e) {
-
     if (recording) {
       recorder.recordToFile(false);
       recording = false;
@@ -168,11 +231,29 @@ public class Recorder extends AnchorPane {
       btnRecordEvent.setText("Event");
     }
 
+    if (recorder.foundMatch()) {
+      shapeMatch.setFill(Color.RED);
+    } else {
+      shapeMatch.setFill(Color.GRAY);
+    }
+
   }
 
   @FXML
   private void recordEvent(ActionEvent e) {
-    recorder.setEvent("noise", 1);
+    recorder.setEvent("noise", 5);
+  }
+
+  @FXML
+  private void refreshPatterns(ActionEvent e) {
+    recognizer.clearPatterns();
+
+    for (RecognizerPatternModel model : lvPatterns.getItems()) {
+      if (model.isSelected()) {
+        System.out.println("Add Pattern: " + model.getName());
+        recognizer.addPattern(model.getPattern());
+      }
+    }
   }
 
   public void stop() {

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.shape.*?>
 <?import javafx.scene.canvas.*?>
 <?import java.lang.*?>
 <?import java.util.*?>
@@ -8,7 +9,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.paint.*?>
 
-<fx:root prefHeight="360.0" prefWidth="516.0" type="javafx.scene.layout.AnchorPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root prefHeight="580.0" prefWidth="794.0" type="javafx.scene.layout.AnchorPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <VBox layoutX="-229.0" layoutY="-232.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -18,6 +19,7 @@
                     <columnConstraints>
                       <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="150.0" />
                       <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="150.0" />
+                        <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
                         <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
                     </columnConstraints>
                     <rowConstraints>
@@ -31,11 +33,26 @@
                         <ComboBox fx:id="cbProvider" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                         <Label text="Save Recording to File:" />
                         <Label text="Change Data Provider:" GridPane.rowIndex="1" />
-                        <Slider fx:id="sMultiplier" blockIncrement="5.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        <HBox alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                           <children>
+                              <Slider fx:id="sMultiplier" blockIncrement="5.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                              <ComboBox fx:id="cbMultiplier" editable="true" prefWidth="150.0" promptText="1" />
+                           </children>
+                        </HBox>
                         <Label text="Raw Data Multiplier" GridPane.rowIndex="2" />
                         <Label text="Recorde Event:" GridPane.rowIndex="3" />
                         <Button fx:id="btnRecordEvent" mnemonicParsing="false" onAction="#recordEvent" text="Event" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                        <ComboBox fx:id="cbMultiplier" editable="true" prefWidth="150.0" promptText="1" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                        <ListView fx:id="lvPatterns" prefHeight="88.0" prefWidth="237.0" GridPane.columnIndex="2" GridPane.rowSpan="3">
+                           <GridPane.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                           </GridPane.margin>
+                        </ListView>
+                        <HBox alignment="CENTER" GridPane.columnIndex="2" GridPane.rowIndex="3">
+                           <children>
+                              <Button fx:id="btnRefreshPatterns" mnemonicParsing="false" onAction="#refreshPatterns" text="Refresh Patterns" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+                           </children>
+                        </HBox>
+                        <Circle fx:id="shapeMatch" fill="#e8ff1f" radius="14.0" stroke="BLACK" strokeType="INSIDE" GridPane.columnIndex="3" />
                      </children>
                   </GridPane>
                </children>

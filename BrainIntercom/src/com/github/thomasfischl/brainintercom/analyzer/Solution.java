@@ -2,45 +2,35 @@ package com.github.thomasfischl.brainintercom.analyzer;
 
 import java.util.LinkedList;
 
-public class Solution implements Comparable<Solution> {
+import com.github.thomasfischl.brainintercom.recorder.recognize.RecognizerPattern;
 
-  private int[] mask;
+public class Solution implements Comparable<Solution> {
 
   private int fitness;
 
-  private int windowSize;
+  private int missingPositivMatch;
 
-  private int dimension;
+  private int negativMatch;
 
-  private int maskSize;
+  protected RecognizerPattern mask;
 
-  public Solution(int windowSize, int dimension) {
-    this.windowSize = windowSize;
-    this.dimension = dimension;
-    maskSize = windowSize * dimension;
-    mask = new int[maskSize];
+  public Solution() {
+    mask = new RecognizerPattern("", GA.model.getDimension(), GA.model.getWindowSize(), GA.model.getRange());
   }
 
   public void randomize() {
     LinkedList<Integer> pos = new LinkedList<>();
-    for (int i = 0; i < maskSize; i++) {
+    for (int i = 0; i < mask.getSize(); i++) {
       pos.add(i);
     }
 
-    for (int i = 0; i < maskSize * 0.7; i++) {
-      mask[pos.remove(GA.rand.nextInt(pos.size()))] = GA.rand.nextInt(4) + 1;
+    int[] data = mask.getData();
+    for (int i = 0; i < mask.getSize() * 0.7; i++) {
+      data[pos.remove(GA.rand.nextInt(pos.size()))] = GA.rand.nextInt(4) + 1;
     }
-    // for (int i = 0; i < maskSize; i++) {
-    // mask[i] = GA.rand.nextInt(5);
-    // }
-    // for (int i = 0; i < windowSize; i++) {
-    // for (int j = 0; j < dimension; j++) {
-    // mask[(i * dimension) + j] = rand.nextInt(5);
-    // }
-    // }
   }
 
-  public void setFitness(int fitness) {
+  private void setFitness(int fitness) {
     this.fitness = fitness;
   }
 
@@ -48,7 +38,7 @@ public class Solution implements Comparable<Solution> {
     return fitness;
   }
 
-  public int[] getMask() {
+  public RecognizerPattern getMask() {
     return mask;
   }
 
@@ -58,16 +48,20 @@ public class Solution implements Comparable<Solution> {
   }
 
   public Solution cross(Solution solution) {
-    Solution newSolution = new Solution(windowSize, dimension);
+    Solution newSolution = new Solution();
 
-    int cutPoint = GA.rand.nextInt(mask.length);
+    int cutPoint = GA.rand.nextInt(mask.getSize());
+
+    int[] newData = newSolution.getMask().getData();
+    int[] oldData = mask.getData();
 
     for (int i = 0; i < cutPoint; i++) {
-      newSolution.mask[i] = mask[i];
+      newData[i] = oldData[i];
     }
 
-    for (int i = cutPoint; i < maskSize; i++) {
-      newSolution.mask[i] = solution.mask[i];
+    oldData = solution.mask.getData();
+    for (int i = cutPoint; i < mask.getSize(); i++) {
+      newData[i] = oldData[i];
     }
 
     return newSolution;
@@ -75,8 +69,9 @@ public class Solution implements Comparable<Solution> {
 
   public int getNumberOfFreePlaces() {
     int numberOfZeros = 0;
-    for (int idx = 0; idx < maskSize; idx++) {
-      if (mask[idx] == 0) {
+    int[] data = mask.getData();
+    for (int idx = 0; idx < mask.getSize(); idx++) {
+      if (data[idx] == 0) {
         numberOfZeros++;
       }
     }
@@ -85,27 +80,52 @@ public class Solution implements Comparable<Solution> {
 
   public void mutate(int iteration) {
     if (iteration < 180) {
-      for (int i = 0; i < maskSize * 0.2; i++) {
-        int idx = GA.rand.nextInt(maskSize);
-        mask[idx] = 0;
-      }
-      for (int i = 0; i < maskSize * 0.05; i++) {
-        int idx = GA.rand.nextInt(maskSize);
-        mask[idx] = GA.rand.nextInt(5);
-      }
+      muteateYoungGeneration();
     } else {
+      mutateOldGeneration();
+    }
+  }
+
+  private void mutateOldGeneration() {
+    int[] data = mask.getData();
+
+    for (int i = 0; i < 2; i++) {
+      int idx = GA.rand.nextInt(mask.getSize());
+      data[idx] = 0;
+    }
+    if (GA.rand.nextDouble() < 0.4) {
       for (int i = 0; i < 2; i++) {
-        int idx = GA.rand.nextInt(maskSize);
-        mask[idx] = 0;
+        int idx = GA.rand.nextInt(mask.getSize());
+        data[idx] = GA.rand.nextInt(5);
       }
     }
   }
 
-  public void mutate1() {
-    for (int i = 0; i < maskSize * 0.7; i++) {
-      int idx = GA.rand.nextInt(maskSize);
-      mask[idx] = GA.rand.nextInt(5);
+  private void muteateYoungGeneration() {
+    int[] data = mask.getData();
+
+    for (int i = 0; i < mask.getSize() * 0.2; i++) {
+      int idx = GA.rand.nextInt(mask.getSize());
+      data[idx] = 0;
     }
+    for (int i = 0; i < mask.getSize() * 0.05; i++) {
+      int idx = GA.rand.nextInt(mask.getSize());
+      data[idx] = GA.rand.nextInt(5);
+    }
+  }
+
+  public void calcFitness(int positivMatch, int negativMatch, int missingPositivMatch, int totalMinMaskDiff) {
+    this.negativMatch = negativMatch;
+    this.missingPositivMatch = missingPositivMatch;
+
+    int fitness = (missingPositivMatch * 100) + (negativMatch * 100) + (totalMinMaskDiff * 2);
+    fitness += getNumberOfFreePlaces();
+    setFitness(fitness);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("Sol[%2d,%3d,%4d]", missingPositivMatch, negativMatch, getNumberOfFreePlaces());
   }
 
 }

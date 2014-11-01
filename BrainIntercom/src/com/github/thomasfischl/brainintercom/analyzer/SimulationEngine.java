@@ -29,30 +29,29 @@ public class SimulationEngine {
     this.heatFactor = heatFactor;
   }
 
-  public void simulate(Solution individual) {
+  public void simulate(Solution individual, int iteration) {
 
-    long maxErrors = Math.round(size * heatFactor); // about 10%
+    int maxErrors = Math.round(Math.round(size * heatFactor)); // about 10%
 
     int positiv = 0;
     int negativ = simulateNegativeExamples(individual, maxErrors);
 
     int totalMinMaskDiff = 0;
+
+    int positiveExampleSize = model.getPositiveExamples().size();
+
+    int counter = 1;
+
     for (Entry<Integer, List<SimulationModelWindow>> part : model.getPositiveExamples().entrySet()) {
+      if (counter > positiveExampleSize) {
+        break;
+      }
       boolean match = false;
 
       int minMaskDiff = Integer.MAX_VALUE;
       for (SimulationModelWindow window : part.getValue()) {
-        int countDiff = 0;
-        int[] iMask = individual.getMask();
-        int[] wMask = window.data;
-        for (int idx = 0; idx < size; idx++) {
-          if (wMask[idx] != iMask[idx] && iMask[idx] != 0) {
-            countDiff++;
-          }
-        }
-
+        int countDiff = individual.getMask().calcDiffCount(window.data, -1);
         if (countDiff <= maxErrors) {
-          // match
           match = true;
         }
         minMaskDiff = Math.min(minMaskDiff, countDiff);
@@ -64,37 +63,18 @@ public class SimulationEngine {
       } else {
         negativ++;
       }
+      counter++;
     }
 
-    int positiveExampleSize = model.getPositiveExamples().size();
     int missingPositivMatch = positiveExampleSize - positiv;
-
-    int fitness = (missingPositivMatch * 100) + (negativ * 100) + (totalMinMaskDiff * 2);
-    if (fitness != 0) {
-      // a good solution should have a less as possible free places
-      fitness += individual.getNumberOfFreePlaces();
-    }
-    individual.setFitness(fitness);
+    individual.calcFitness(positiv, negativ, missingPositivMatch, totalMinMaskDiff);
   }
 
-  private int simulateNegativeExamples(Solution individual, long maxErrors) {
+  private int simulateNegativeExamples(Solution individual, int maxErrors) {
     int negativ = 0;
     for (SimulationModelWindow window : model.getNegativeExamples()) {
-      int countDiff = 0;
-      int[] iMask = individual.getMask();
-      int[] wMask = window.data;
-      for (int idx = 0; idx < size; idx++) {
-        if (wMask[idx] != iMask[idx] && iMask[idx] != 0) {
-          countDiff++;
-
-          if (countDiff > maxErrors) {
-            break;
-          }
-        }
-      }
-
+      int countDiff = individual.getMask().calcDiffCount(window.data, maxErrors);
       if (countDiff <= maxErrors) {
-        // match
         negativ++;
       }
     }

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 
 import com.github.thomasfischl.brainintercom.provider.DataProvider;
+import com.github.thomasfischl.brainintercom.recorder.recognize.Recognizer;
 import com.github.thomasfischl.brainintercom.util.FFTWindowData;
 import com.github.thomasfischl.brainintercom.util.RealDoubleFFT;
 
@@ -28,6 +29,9 @@ public class DataEngine {
 
   private String event = "";
   private int eventCounter = 0;
+  private Recognizer recognizer;
+
+  private int foundMatch = 0;
 
   public void record() {
     while (true) {
@@ -57,6 +61,12 @@ public class DataEngine {
           fftWindowData.removeFirst();
         }
 
+        if (recognizer != null) {
+          if (recognizer.analyzeData(vals) != null) {
+            foundMatch = 100;
+          }
+        }
+
         if (recFileWriter != null) {
           try {
             recFileWriter.write(time + ";" + data.getLast() + ";" + event + ";");
@@ -74,6 +84,10 @@ public class DataEngine {
 
         if (data.size() > size) {
           data.removeFirst();
+        }
+
+        if (foundMatch > 0) {
+          foundMatch--;
         }
 
         if (hasEvent()) {
@@ -226,6 +240,7 @@ public class DataEngine {
 
   public void recordToFile(boolean start) {
     if (start) {
+      time = 0;
       File recFile = new File("./data", dataProvider.getClass().getSimpleName() + "-" + System.currentTimeMillis() + ".csv");
       recFile.getParentFile().mkdirs();
       try {
@@ -260,5 +275,13 @@ public class DataEngine {
 
   public boolean hasEvent() {
     return eventCounter > 0 || dataProvider.hasEvent();
+  }
+
+  public void setRecognizer(Recognizer recognizer) {
+    this.recognizer = recognizer;
+  }
+
+  public boolean foundMatch() {
+    return foundMatch > 0;
   }
 }

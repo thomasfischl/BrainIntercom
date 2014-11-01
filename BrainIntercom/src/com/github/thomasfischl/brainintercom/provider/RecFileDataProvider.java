@@ -28,7 +28,7 @@ public class RecFileDataProvider implements DataProvider {
   @Override
   public double read() {
     try {
-      Thread.sleep(5);
+      Thread.sleep(2);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
