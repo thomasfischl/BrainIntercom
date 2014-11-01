@@ -17,15 +17,11 @@ public class GA {
 
   protected Solution[] population;
 
-  public static SimulationModel model;
-
   public static Random rand = new Random();
 
   protected int iteration = 0;
 
   private double mutationRate = 0.1;
-
-  private SimulationEngine engine;
 
   private int oldBestSolution = Integer.MAX_VALUE;
 
@@ -37,11 +33,16 @@ public class GA {
 
   private boolean analyzeIteration;
 
-  public GA(SimulationModel model, boolean analyzeIteration) {
-    GA.model = model;
+  private Problem problem;
+
+  // ------------------------------------------------------------------
+
+  public GA(Problem problem, boolean analyzeIteration) {
+    this.problem = problem;
     this.analyzeIteration = analyzeIteration;
-    engine = new SimulationEngine(model);
   }
+
+  // ------------------------------------------------------------------
 
   public void run() {
     phaseInit();
@@ -61,15 +62,11 @@ public class GA {
   }
 
   protected void phaseInit() {
-    population = new Solution[populationSize];
-    for (int i = 0; i < populationSize; i++) {
-      population[i] = new Solution();
-      population[i].randomize();
-    }
+    population = problem.createInitialPopulation(populationSize);
   }
 
   private void phaseEvalFitness() {
-    Arrays.stream(population).parallel().forEach(obj -> engine.simulate(obj, iteration));
+    problem.evaluateFitness(population, iteration);
     Arrays.sort(population);
   }
 
@@ -85,7 +82,7 @@ public class GA {
     for (int i = 1; i < populationSize; i++) {
       p1 = selectParentWithTournamet(2);
       p2 = selectParentWithTournamet(2);
-      newPopulation[i] = population[p1].cross(population[p2]);
+      newPopulation[i] = problem.cross(population[p1], (population[p2]), iteration);
     }
 
     // one shot population change
@@ -95,14 +92,12 @@ public class GA {
   private void phaseMutation() {
     for (int idx = 1; idx < populationSize; idx++) {
       if (rand.nextDouble() < mutationRate) {
-        population[idx].mutate(iteration);
+        problem.mutate(population[idx], iteration);
       }
     }
   }
 
   private void runLoop() {
-    adoptSimulationHeatFactor();
-
     Stopwatch sw = Stopwatch.createStarted();
     phaseEvalFitness();
 
@@ -132,21 +127,6 @@ public class GA {
     return pos;
   }
 
-  private void adoptSimulationHeatFactor() {
-    if (iteration == 0) {
-      engine.setHeatFactor(0.2);
-    } else if (iteration == 50) {
-      engine.setHeatFactor(0.1);
-    } else if (iteration == 100) {
-      engine.setHeatFactor(0.05);
-    } else if (iteration == 150) {
-      engine.setHeatFactor(0.0);
-    } else {
-      return;
-    }
-    oldBestSolution = Integer.MAX_VALUE;
-  }
-
   private void analyzeIteration(String duration) {
     avgSolutionFitness = 0;
     for (Solution sol : population) {
@@ -158,8 +138,7 @@ public class GA {
     bestSolutionFitness = bestSol.getFitness();
     worstSolutionFitness = population[populationSize - 2].getFitness();
 
-    System.out.format("%3d iteration: %6d/%6d/%6d %s (%s)\n", iteration, worstSolutionFitness, avgSolutionFitness, bestSolutionFitness,
-        bestSol, duration);
+    System.out.format("%3d iteration: %6d/%6d/%6d %s (%s)\n", iteration, worstSolutionFitness, avgSolutionFitness, bestSolutionFitness, bestSol, duration);
 
     if (bestSolutionFitness < oldBestSolution) {
       generatePatternImage(bestSol);
@@ -214,9 +193,11 @@ public class GA {
 
   public static void main(String[] args) throws IOException {
     System.out.println("Start loading model");
-    // SimulationModel model = new SimulationModel(40, 30, new File("./data/ArduinoDataProvider-1.csv"), 25);
+    // SimulationModel model = new SimulationModel(40, 30, new
+    // File("./data/ArduinoDataProvider-1.csv"), 25);
     SimulationModel model = new SimulationModel(20, 30, new File("./data/MicrophoneDataProvider-long-1.csv"), 25);
-    // SimulationModel model = new SimulationModel(20, 30, new File("./data/MicrophoneDataProvider-1414575657569.csv"), 25);
+    // SimulationModel model = new SimulationModel(20, 30, new
+    // File("./data/MicrophoneDataProvider-1414575657569.csv"), 25);
 
     System.out.println("Loading Model finished");
 
@@ -231,13 +212,13 @@ public class GA {
     FileUtil.deleteFolder(folder);
     folder.mkdirs();
 
-    GA ga = new GA(model, true);
+    PatternRecognizerProblem problem = new PatternRecognizerProblem(model);
+    GA ga = new GA(problem, true);
     ga.run();
 
     System.out.println("Finished GA");
     System.out.println("--------------------------------------------");
-    System.out.println("Free Places: " + ga.getBestSolution().getNumberOfFreePlaces() + " of "
-        + (model.getWindowSize() * model.getDimension()));
+    System.out.println("Free Places: " + ga.getBestSolution().getNumberOfFreePlaces() + " of " + (model.getWindowSize() * model.getDimension()));
     System.out.println("Iteration: " + ga.iteration);
   }
 

@@ -25,6 +25,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 
 import com.github.thomasfischl.brainintercom.analyzer.GA;
+import com.github.thomasfischl.brainintercom.analyzer.PatternRecognizerProblem;
 import com.github.thomasfischl.brainintercom.analyzer.SimulationModel;
 import com.github.thomasfischl.brainintercom.recorder.recognize.DataRange;
 
@@ -138,7 +139,9 @@ public class GAView extends AnchorPane {
     SimulationModel model = new SimulationModel(20, 30, recFile, 25);
     showModelMetaData(model);
     showRecordedData(model);
-    ga = new GA(model, false);
+
+    PatternRecognizerProblem problem = new PatternRecognizerProblem(model);
+    ga = new GA(problem, false);
     updaterTask.setGa(ga);
     ga.run();
   }

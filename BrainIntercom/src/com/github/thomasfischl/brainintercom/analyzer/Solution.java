@@ -2,6 +2,7 @@ package com.github.thomasfischl.brainintercom.analyzer;
 
 import java.util.LinkedList;
 
+import com.github.thomasfischl.brainintercom.recorder.recognize.DataRange;
 import com.github.thomasfischl.brainintercom.recorder.recognize.RecognizerPattern;
 
 public class Solution implements Comparable<Solution> {
@@ -14,8 +15,8 @@ public class Solution implements Comparable<Solution> {
 
   protected RecognizerPattern mask;
 
-  public Solution() {
-    mask = new RecognizerPattern("", GA.model.getDimension(), GA.model.getWindowSize(), GA.model.getRange());
+  public Solution(int dimension, int windowSize, DataRange range) {
+    mask = new RecognizerPattern("", dimension, windowSize, range);
   }
 
   public void randomize() {
@@ -48,7 +49,7 @@ public class Solution implements Comparable<Solution> {
   }
 
   public Solution cross(Solution solution) {
-    Solution newSolution = new Solution();
+    Solution newSolution = new Solution(mask.getDimenstion(), mask.getWindowSize(), mask.getRange());
 
     int cutPoint = GA.rand.nextInt(mask.getSize());
 
