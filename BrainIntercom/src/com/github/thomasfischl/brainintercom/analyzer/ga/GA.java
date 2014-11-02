@@ -1,4 +1,4 @@
-package com.github.thomasfischl.brainintercom.analyzer;
+package com.github.thomasfischl.brainintercom.analyzer.ga;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,11 +33,11 @@ public class GA {
 
   private boolean analyzeIteration;
 
-  private Problem problem;
+  private IProblem problem;
 
   // ------------------------------------------------------------------
 
-  public GA(Problem problem, boolean analyzeIteration) {
+  public GA(IProblem problem, boolean analyzeIteration) {
     this.problem = problem;
     this.analyzeIteration = analyzeIteration;
   }
@@ -193,9 +193,8 @@ public class GA {
 
   public static void main(String[] args) throws IOException {
     System.out.println("Start loading model");
-    // SimulationModel model = new SimulationModel(40, 30, new
-    // File("./data/ArduinoDataProvider-1.csv"), 25);
-    SimulationModel model = new SimulationModel(20, 30, new File("./data/MicrophoneDataProvider-long-1.csv"), 25);
+    SimulationModel model = new SimulationModel(20, 30, new File("./data/ArduinoDataProvider-1.csv"), 25);
+    // SimulationModel model = new SimulationModel(20, 30, new File("./data/MicrophoneDataProvider-long-1.csv"), 25);
     // SimulationModel model = new SimulationModel(20, 30, new
     // File("./data/MicrophoneDataProvider-1414575657569.csv"), 25);
 

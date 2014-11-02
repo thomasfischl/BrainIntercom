@@ -1,11 +1,11 @@
-package com.github.thomasfischl.brainintercom.analyzer;
+package com.github.thomasfischl.brainintercom.analyzer.ga;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map.Entry;
 
-import com.github.thomasfischl.brainintercom.analyzer.SimulationModel.SimulationModelWindow;
+import com.github.thomasfischl.brainintercom.analyzer.ga.SimulationModel.SimulationModelWindow;
 import com.github.thomasfischl.brainintercom.util.FileUtil;
 
 public class SimulationModelAnalyzer {

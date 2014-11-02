@@ -1,4 +1,4 @@
-package com.github.thomasfischl.brainintercom.analyzer.ui;
+package com.github.thomasfischl.brainintercom.analyzer.ga.ui;
 
 import java.io.IOException;
 

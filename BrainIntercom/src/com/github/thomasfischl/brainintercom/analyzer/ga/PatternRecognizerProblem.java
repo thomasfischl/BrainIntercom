@@ -1,15 +1,14 @@
-package com.github.thomasfischl.brainintercom.analyzer;
+package com.github.thomasfischl.brainintercom.analyzer.ga;
 
-import java.util.Arrays;
+public class PatternRecognizerProblem implements IProblem {
 
-public class PatternRecognizerProblem implements Problem {
-
-  private SimulationEngine engine;
+  private ISimulationEngine engine;
   private SimulationModel model;
 
   public PatternRecognizerProblem(SimulationModel model) {
     this.model = model;
-    engine = new SimulationEngine(model);
+    // engine = new OptimizedSimulationEngine(model);
+    engine = new SimpleSimulationEngine(model);
   }
 
   @Override
@@ -25,7 +24,7 @@ public class PatternRecognizerProblem implements Problem {
   @Override
   public void evaluateFitness(Solution[] population, int iteration) {
     adoptSimulationHeatFactor(iteration);
-    Arrays.stream(population).parallel().forEach(obj -> engine.simulate(obj, iteration));
+    engine.simulate(population, iteration);
   }
 
   @Override

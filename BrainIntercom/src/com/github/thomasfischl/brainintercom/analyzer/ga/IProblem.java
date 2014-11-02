@@ -1,6 +1,6 @@
-package com.github.thomasfischl.brainintercom.analyzer;
+package com.github.thomasfischl.brainintercom.analyzer.ga;
 
-public interface Problem {
+public interface IProblem {
 
 	Solution[] createInitialPopulation(int populationSize);
 

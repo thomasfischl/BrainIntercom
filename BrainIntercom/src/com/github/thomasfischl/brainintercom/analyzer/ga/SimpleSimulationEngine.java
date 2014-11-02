@@ -1,12 +1,13 @@
-package com.github.thomasfischl.brainintercom.analyzer;
+package com.github.thomasfischl.brainintercom.analyzer.ga;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 
-import com.github.thomasfischl.brainintercom.analyzer.SimulationModel.SimulationModelWindow;
+import com.github.thomasfischl.brainintercom.analyzer.ga.SimulationModel.SimulationModelWindow;
 
-public class SimulationEngine {
+public class SimpleSimulationEngine implements ISimulationEngine {
 
   private SimulationModel model;
 
@@ -16,7 +17,7 @@ public class SimulationEngine {
 
   private double heatFactor = 0.5;
 
-  public SimulationEngine(SimulationModel model) {
+  public SimpleSimulationEngine(SimulationModel model) {
     this.model = model;
     size = model.getDimension() * model.getWindowSize();
     for (SimulationModelWindow window : model.getWindows()) {
@@ -24,12 +25,18 @@ public class SimulationEngine {
     }
   }
 
+  @Override
   public void setHeatFactor(double heatFactor) {
     System.out.println("Set HeatFactor: " + heatFactor + " (" + this.heatFactor + ")");
     this.heatFactor = heatFactor;
   }
 
-  public void simulate(Solution individual, int iteration) {
+  @Override
+  public void simulate(Solution[] population, int iteration) {
+    Arrays.stream(population).parallel().forEach(obj -> simulate(obj, iteration));
+  }
+
+  private void simulate(Solution individual, int iteration) {
 
     int maxErrors = Math.round(Math.round(size * heatFactor)); // about 10%
 

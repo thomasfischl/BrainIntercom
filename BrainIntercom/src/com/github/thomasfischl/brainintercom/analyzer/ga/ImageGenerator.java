@@ -1,4 +1,4 @@
-package com.github.thomasfischl.brainintercom.analyzer;
+package com.github.thomasfischl.brainintercom.analyzer.ga;
 
 import java.awt.Color;
 import java.awt.Graphics;

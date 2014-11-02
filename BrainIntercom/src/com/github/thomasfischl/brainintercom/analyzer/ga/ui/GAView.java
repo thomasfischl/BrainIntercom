@@ -1,4 +1,4 @@
-package com.github.thomasfischl.brainintercom.analyzer.ui;
+package com.github.thomasfischl.brainintercom.analyzer.ga.ui;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,9 +24,9 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 
-import com.github.thomasfischl.brainintercom.analyzer.GA;
-import com.github.thomasfischl.brainintercom.analyzer.PatternRecognizerProblem;
-import com.github.thomasfischl.brainintercom.analyzer.SimulationModel;
+import com.github.thomasfischl.brainintercom.analyzer.ga.GA;
+import com.github.thomasfischl.brainintercom.analyzer.ga.PatternRecognizerProblem;
+import com.github.thomasfischl.brainintercom.analyzer.ga.SimulationModel;
 import com.github.thomasfischl.brainintercom.recorder.recognize.DataRange;
 
 public class GAView extends AnchorPane {

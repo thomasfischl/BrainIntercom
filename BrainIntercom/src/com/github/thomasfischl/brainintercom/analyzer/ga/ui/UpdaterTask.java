@@ -1,8 +1,8 @@
-package com.github.thomasfischl.brainintercom.analyzer.ui;
+package com.github.thomasfischl.brainintercom.analyzer.ga.ui;
 
 import javafx.application.Platform;
 
-import com.github.thomasfischl.brainintercom.analyzer.GA;
+import com.github.thomasfischl.brainintercom.analyzer.ga.GA;
 import com.github.thomasfischl.brainintercom.recorder.recognize.RecognizerPattern;
 
 public class UpdaterTask {
