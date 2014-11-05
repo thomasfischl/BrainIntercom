@@ -39,15 +39,18 @@ public class PatternRecognizerProblem implements IProblem {
 
   private void adoptSimulationHeatFactor(int iteration) {
     if (iteration == 0) {
-      engine.setHeatFactor(0.2);
-    } else if (iteration == 50) {
-      engine.setHeatFactor(0.1);
-    } else if (iteration == 100) {
-      engine.setHeatFactor(0.05);
-    } else if (iteration == 150) {
-      engine.setHeatFactor(0.0);
-    } else {
-      return;
+      engine.setHeatFactor(0);
     }
+    // if (iteration == 0) {
+    // engine.setHeatFactor(0.2);
+    // } else if (iteration == 50) {
+    // engine.setHeatFactor(0.1);
+    // } else if (iteration == 100) {
+    // engine.setHeatFactor(0.05);
+    // } else if (iteration == 150) {
+    // engine.setHeatFactor(0.0);
+    // } else {
+    // return;
+    // }
   }
 }

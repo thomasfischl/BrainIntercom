@@ -2,10 +2,15 @@ package com.github.thomasfischl.brainintercom.analyzer.ga;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
-import com.github.thomasfischl.brainintercom.recorder.recognize.RecognizerPatternStore;
+import com.github.thomasfischl.brainintercom.analyzer.ga.iterationanalyzer.ConsoleIterationAnalyzer;
+import com.github.thomasfischl.brainintercom.analyzer.ga.iterationanalyzer.IIterationAnalyzer;
+import com.github.thomasfischl.brainintercom.analyzer.ga.iterationanalyzer.SolutionImageGenerator;
+import com.github.thomasfischl.brainintercom.analyzer.ga.iterationanalyzer.SolutionSaver;
 import com.github.thomasfischl.brainintercom.util.FileUtil;
 import com.google.common.base.Stopwatch;
 
@@ -23,23 +28,20 @@ public class GA {
 
   private double mutationRate = 0.1;
 
-  private int oldBestSolution = Integer.MAX_VALUE;
-
   private int avgSolutionFitness;
 
   private int bestSolutionFitness;
 
   private int worstSolutionFitness;
 
-  private boolean analyzeIteration;
-
   private IProblem problem;
+
+  private List<IIterationAnalyzer> iterationAnalyzer = new ArrayList<>();
 
   // ------------------------------------------------------------------
 
-  public GA(IProblem problem, boolean analyzeIteration) {
+  public GA(IProblem problem) {
     this.problem = problem;
-    this.analyzeIteration = analyzeIteration;
   }
 
   // ------------------------------------------------------------------
@@ -51,7 +53,7 @@ public class GA {
       while (true) {
         runLoop();
 
-        if (oldBestSolution == 0) {
+        if (bestSolutionFitness == 0) {
           break;
         }
 
@@ -60,6 +62,36 @@ public class GA {
     } catch (InterruptedException e) {
     }
   }
+
+  public void addIterationAnalyzer(IIterationAnalyzer analyzer) {
+    iterationAnalyzer.add(analyzer);
+  }
+
+  public Solution[] getPopulation() {
+    return population;
+  }
+
+  public Solution getBestSolution() {
+    return population[0];
+  }
+
+  public int getIteration() {
+    return iteration;
+  }
+
+  public int getAvgSolutionFitness() {
+    return avgSolutionFitness;
+  }
+
+  public int getBestSolutionFitness() {
+    return bestSolutionFitness;
+  }
+
+  public int getWorstSolutionFitness() {
+    return worstSolutionFitness;
+  }
+
+  // ------------------------------------------------------------------
 
   protected void phaseInit() {
     population = problem.createInitialPopulation(populationSize);
@@ -101,9 +133,7 @@ public class GA {
     Stopwatch sw = Stopwatch.createStarted();
     phaseEvalFitness();
 
-    if (analyzeIteration) {
-      analyzeIteration(sw.stop().toString());
-    }
+    analyzeIteration(sw.stop());
 
     phaseNextGen();
     phaseMutation();
@@ -114,12 +144,13 @@ public class GA {
   private int selectParentWithTournamet(int size) {
     int pos = rand.nextInt(populationSize);
     int fitness = population[pos].getFitness();
+    double victoryProbablility = rand.nextDouble();
 
-    for (int x = 0; x < 5; x++) {
+    for (int x = 0; x < size; x++) {
       int tempPos = rand.nextInt(populationSize);
       int tempFitness = population[tempPos].getFitness();
 
-      if (tempFitness < fitness) {
+      if (tempFitness < fitness && victoryProbablility > .4) {
         fitness = tempFitness;
         pos = tempPos;
       }
@@ -127,7 +158,7 @@ public class GA {
     return pos;
   }
 
-  private void analyzeIteration(String duration) {
+  private void analyzeIteration(Stopwatch stopwatch) {
     avgSolutionFitness = 0;
     for (Solution sol : population) {
       avgSolutionFitness += sol.getFitness();
@@ -138,63 +169,17 @@ public class GA {
     bestSolutionFitness = bestSol.getFitness();
     worstSolutionFitness = population[populationSize - 2].getFitness();
 
-    System.out.format("%3d iteration: %6d/%6d/%6d %s (%s)\n", iteration, worstSolutionFitness, avgSolutionFitness, bestSolutionFitness, bestSol, duration);
-
-    if (bestSolutionFitness < oldBestSolution) {
-      generatePatternImage(bestSol);
+    for (IIterationAnalyzer analyzer : iterationAnalyzer) {
+      analyzer.analyze(this, iteration, stopwatch);
     }
-    if (iteration % 20 == 0) {
-      storePattern(bestSol);
-    }
-    oldBestSolution = bestSolutionFitness;
-  }
-
-  private void storePattern(Solution bestSol) {
-    RecognizerPatternStore store = new RecognizerPatternStore();
-    try {
-      store.storePattern(bestSol.getMask(), new File(RESULT_FOLDER, "pattern_" + iteration + ".json"));
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
-  private void generatePatternImage(Solution bestSol) {
-    try {
-      int windowSize = bestSol.getMask().getWindowSize();
-      int dimenstion = bestSol.getMask().getDimenstion();
-      int[] data = bestSol.getMask().getData();
-      ImageGenerator.generateWindowImage(new File(RESULT_FOLDER, "iteration" + iteration + ".png"), windowSize, dimenstion, data);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
-  public Solution getBestSolution() {
-    return population[0];
-  }
-
-  public int getIteration() {
-    return iteration;
-  }
-
-  public int getAvgSolutionFitness() {
-    return avgSolutionFitness;
-  }
-
-  public int getBestSolutionFitness() {
-    return bestSolutionFitness;
-  }
-
-  public int getWorstSolutionFitness() {
-    return worstSolutionFitness;
   }
 
   // -----------------------------------------------------------------------------
 
   public static void main(String[] args) throws IOException {
     System.out.println("Start loading model");
-    SimulationModel model = new SimulationModel(20, 30, new File("./data/ArduinoDataProvider-1.csv"), 25);
-    // SimulationModel model = new SimulationModel(20, 30, new File("./data/MicrophoneDataProvider-long-1.csv"), 25);
+    // SimulationModel model = new SimulationModel(20, 30, new File("./data/ArduinoDataProvider-1.csv"), 25);
+    SimulationModel model = new SimulationModel(20, 30, new File("./data/MicrophoneDataProvider-long-1.csv"), 25);
     // SimulationModel model = new SimulationModel(20, 30, new
     // File("./data/MicrophoneDataProvider-1414575657569.csv"), 25);
 
@@ -212,7 +197,10 @@ public class GA {
     folder.mkdirs();
 
     PatternRecognizerProblem problem = new PatternRecognizerProblem(model);
-    GA ga = new GA(problem, true);
+    GA ga = new GA(problem);
+    ga.addIterationAnalyzer(new ConsoleIterationAnalyzer());
+    ga.addIterationAnalyzer(new SolutionImageGenerator());
+    ga.addIterationAnalyzer(new SolutionSaver());
     ga.run();
 
     System.out.println("Finished GA");

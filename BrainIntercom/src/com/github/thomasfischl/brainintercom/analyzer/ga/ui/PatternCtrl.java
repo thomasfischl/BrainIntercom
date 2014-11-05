@@ -19,6 +19,23 @@ public class PatternCtrl extends AnchorPane {
 
   private boolean fullSize;
 
+  private ColorMapper mapper = (val) -> {
+    switch (val) {
+    case 0:
+      return Color.WHITE;
+    case 1:
+      return Color.GREEN;
+    case 2:
+      return Color.YELLOW;
+    case 3:
+      return Color.ORANGE;
+    case 4:
+      return Color.RED;
+    default:
+      return Color.BLACK;
+    }
+  };
+
   public PatternCtrl() {
     FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("PatternCtrl.fxml"));
     fxmlLoader.setRoot(this);
@@ -28,6 +45,19 @@ public class PatternCtrl extends AnchorPane {
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  public PatternCtrl(int factor, boolean fullSize) {
+    this();
+    this.fullSize = fullSize;
+    this.factor = factor;
+  }
+
+  public PatternCtrl(int factor, boolean fullSize, ColorMapper mapper) {
+    this();
+    this.fullSize = fullSize;
+    this.factor = factor;
+    this.mapper = mapper;
   }
 
   public void setFactor(int factor) {
@@ -45,26 +75,7 @@ public class PatternCtrl extends AnchorPane {
 
     for (int x = 0; x < windowSize; x++) {
       for (int y = 0; y < dimension; y++) {
-        Color color;
-        switch (data[(dimension * x) + y]) {
-        case 0:
-          color = Color.WHITE;
-          break;
-        case 1:
-          color = Color.GREEN;
-          break;
-        case 2:
-          color = Color.YELLOW;
-          break;
-        case 3:
-          color = Color.ORANGE;
-          break;
-        case 4:
-          color = Color.RED;
-          break;
-        default:
-          color = Color.BLACK;
-        }
+        Color color = mapper.map(data[(dimension * x) + y]);
 
         for (int xfac = 0; xfac < factor; xfac++) {
           for (int yfac = 0; yfac < factor; yfac++) {
@@ -81,6 +92,9 @@ public class PatternCtrl extends AnchorPane {
     if (fullSize) {
       setMinHeight(wImage.getHeight() + 25);
       setMinWidth(wImage.getWidth() + 25);
+    } else {
+      setPrefHeight(wImage.getHeight() + 25);
+      setPrefWidth(wImage.getWidth() + 25);
     }
 
   }

@@ -23,10 +23,13 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 
 import com.github.thomasfischl.brainintercom.analyzer.ga.GA;
 import com.github.thomasfischl.brainintercom.analyzer.ga.PatternRecognizerProblem;
 import com.github.thomasfischl.brainintercom.analyzer.ga.SimulationModel;
+import com.github.thomasfischl.brainintercom.analyzer.ga.iterationanalyzer.ConsoleIterationAnalyzer;
+import com.github.thomasfischl.brainintercom.analyzer.ga.iterationanalyzer.GenomeAnalyzer;
 import com.github.thomasfischl.brainintercom.recorder.recognize.DataRange;
 
 public class GAView extends AnchorPane {
@@ -49,6 +52,7 @@ public class GAView extends AnchorPane {
   private TextArea txtData;
 
   private PatternCtrl bestSolPattern;
+  private PatternCtrl genomePattern;
   private PatternCtrl dataPattern;
 
   private ScheduledExecutorService pool;
@@ -102,12 +106,30 @@ public class GAView extends AnchorPane {
     // qualityChartYAxis.setTickLabelsVisible(false);
     qualityChartYAxis.setTickUnit(1000);
 
-    bestSolPattern = new PatternCtrl();
-    bestSolPattern.setFactor(6);
-    bestSolPattern.setFullSize();
-    dataPattern = new PatternCtrl();
-    dataPattern.setFactor(6);
-    patternGroup.getChildren().addAll(bestSolPattern, dataPattern);
+    bestSolPattern = new PatternCtrl(6, true);
+    dataPattern = new PatternCtrl(6, false);
+
+    genomePattern = new PatternCtrl(6, true, (val) -> {
+      switch (val) {
+      case 0:
+        return Color.gray(0);
+      case 1:
+        return Color.gray(0.2);
+      case 2:
+        return Color.gray(0.4);
+      case 3:
+        return Color.gray(0.6);
+      case 4:
+        return Color.gray(0.8);
+      case 5:
+        return Color.gray(1);
+      default:
+        System.out.println(val);
+        return Color.RED;
+      }
+    });
+
+    patternGroup.getChildren().addAll(bestSolPattern, genomePattern, dataPattern);
   }
 
   @FXML
@@ -141,9 +163,19 @@ public class GAView extends AnchorPane {
     showRecordedData(model);
 
     PatternRecognizerProblem problem = new PatternRecognizerProblem(model);
-    ga = new GA(problem, false);
+    ga = new GA(problem);
     updaterTask.setGa(ga);
+    GenomeAnalyzer analyzer = new GenomeAnalyzer();
+    pool.scheduleAtFixedRate(() -> updateGenomeView(analyzer, model.getDimension(), model.getWindowSize()), 0, 1, TimeUnit.SECONDS);
+    ga.addIterationAnalyzer(analyzer);
+    ga.addIterationAnalyzer(new ConsoleIterationAnalyzer());
     ga.run();
+  }
+
+  private void updateGenomeView(GenomeAnalyzer analyzer, int dimension, int windowSize) {
+    if (analyzer.getGenomes() != null) {
+      Platform.runLater(() -> genomePattern.update(analyzer.getGenomes(), dimension, windowSize));
+    }
   }
 
   private void showModelMetaData(SimulationModel model) {

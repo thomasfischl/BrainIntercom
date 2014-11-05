@@ -31,7 +31,7 @@ public class Solution implements Comparable<Solution> {
     }
   }
 
-  private void setFitness(int fitness) {
+  public void setFitness(int fitness) {
     this.fitness = fitness;
   }
 
@@ -80,11 +80,24 @@ public class Solution implements Comparable<Solution> {
   }
 
   public void mutate(int iteration) {
-    if (iteration < 180) {
-      muteateYoungGeneration();
-    } else {
-      mutateOldGeneration();
+    int[] data = mask.getData();
+
+    for (int i = 0; i < 2; i++) {
+      int idx = GA.rand.nextInt(mask.getSize());
+      data[idx] = 0;
     }
+    if (GA.rand.nextDouble() < 0.1) {
+      for (int i = 0; i < 2; i++) {
+        int idx = GA.rand.nextInt(mask.getSize());
+        data[idx] = GA.rand.nextInt(5);
+      }
+    }
+    
+    // if (iteration < 180) {
+    // muteateYoungGeneration();
+    // } else {
+    // mutateOldGeneration();
+    // }
   }
 
   private void mutateOldGeneration() {
