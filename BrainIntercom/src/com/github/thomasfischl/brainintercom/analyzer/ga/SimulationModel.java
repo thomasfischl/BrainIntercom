@@ -55,20 +55,21 @@ public class SimulationModel {
 
     Collections.sort(list);
 
-    int range1 = list.get((int) (list.size() * 0.3)).intValue();
-    int range2 = list.get((int) (list.size() * 0.5)).intValue();
-    int range3 = list.get((int) (list.size() * 0.8)).intValue();
+    int[] ranges = new int[Configuration.dataRangeSize - 1];
 
-    if (range2 <= range1) {
-      range2 = range1 + 1;
+    double interval = list.size() / ranges.length;
+    for (int i = 0; i < ranges.length; i++) {
+      ranges[i] = list.get(((int) interval * (i + 1)));
     }
 
-    if (range3 <= range2) {
-      range3 = range2 + 1;
+    for (int i = 1; i < ranges.length; i++) {
+      if (ranges[i - 1] >= ranges[i]) {
+        ranges[i] = ranges[i - 1] + 1;
+      }
     }
 
-    range = new DataRange(range1, range2, range3);
-    System.out.println("Range: " + range.getRange1() + "/" + range.getRange2() + "/" + range.getRange3());
+    range = new DataRange(ranges);
+    System.out.println("Range: " + range);
 
     List<int[]> result = new ArrayList<int[]>();
     for (double[] raw : rawData) {

@@ -26,8 +26,8 @@ public class Solution implements Comparable<Solution> {
     }
 
     int[] data = mask.getData();
-    for (int i = 0; i < mask.getSize() * 0.7; i++) {
-      data[pos.remove(GA.rand.nextInt(pos.size()))] = GA.rand.nextInt(4) + 1;
+    for (int i = 0; i < mask.getSize() * 0.5; i++) {
+      data[pos.remove(GA.rand.nextInt(pos.size()))] = GA.rand.nextInt(Configuration.dataRangeSize - 1) + 1;
     }
   }
 
@@ -80,24 +80,22 @@ public class Solution implements Comparable<Solution> {
   }
 
   public void mutate(int iteration) {
-    int[] data = mask.getData();
+    // int[] data = mask.getData();
 
-    for (int i = 0; i < 2; i++) {
-      int idx = GA.rand.nextInt(mask.getSize());
-      data[idx] = 0;
-    }
-    if (GA.rand.nextDouble() < 0.1) {
-      for (int i = 0; i < 2; i++) {
-        int idx = GA.rand.nextInt(mask.getSize());
-        data[idx] = GA.rand.nextInt(5);
-      }
-    }
-    
-    // if (iteration < 180) {
-    // muteateYoungGeneration();
-    // } else {
-    // mutateOldGeneration();
+    // for (int i = 0; i < 2; i++) {
+    // int idx = GA.rand.nextInt(mask.getSize());
+    // data[idx] = 0;
     // }
+    // for (int i = 0; i < mask.getSize() * 0.1; i++) {
+    // int idx = GA.rand.nextInt(mask.getSize());
+    // data[idx] = GA.rand.nextInt(Configuration.dataRangeSize - 1);
+    // }
+
+    if (iteration < 180) {
+      muteateYoungGeneration();
+    } else {
+      mutateOldGeneration();
+    }
   }
 
   private void mutateOldGeneration() {
@@ -110,7 +108,7 @@ public class Solution implements Comparable<Solution> {
     if (GA.rand.nextDouble() < 0.4) {
       for (int i = 0; i < 2; i++) {
         int idx = GA.rand.nextInt(mask.getSize());
-        data[idx] = GA.rand.nextInt(5);
+        data[idx] = GA.rand.nextInt(Configuration.dataRangeSize - 1);
       }
     }
   }
@@ -118,13 +116,13 @@ public class Solution implements Comparable<Solution> {
   private void muteateYoungGeneration() {
     int[] data = mask.getData();
 
-    for (int i = 0; i < mask.getSize() * 0.2; i++) {
+    for (int i = 0; i < mask.getSize() * 0.1; i++) {
       int idx = GA.rand.nextInt(mask.getSize());
       data[idx] = 0;
     }
     for (int i = 0; i < mask.getSize() * 0.05; i++) {
       int idx = GA.rand.nextInt(mask.getSize());
-      data[idx] = GA.rand.nextInt(5);
+      data[idx] = GA.rand.nextInt(Configuration.dataRangeSize - 1);
     }
   }
 
@@ -132,7 +130,7 @@ public class Solution implements Comparable<Solution> {
     this.negativMatch = negativMatch;
     this.missingPositivMatch = missingPositivMatch;
 
-    int fitness = (missingPositivMatch * 100) + (negativMatch * 100) + (totalMinMaskDiff * 2);
+    int fitness = (missingPositivMatch * 300) + (negativMatch * 100) + (totalMinMaskDiff * 1);
     fitness += getNumberOfFreePlaces();
     setFitness(fitness);
   }

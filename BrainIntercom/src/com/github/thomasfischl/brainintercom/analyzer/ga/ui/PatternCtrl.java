@@ -10,6 +10,8 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 
+import com.github.thomasfischl.brainintercom.analyzer.ga.Configuration;
+
 public class PatternCtrl extends AnchorPane {
 
   @FXML
@@ -19,22 +21,7 @@ public class PatternCtrl extends AnchorPane {
 
   private boolean fullSize;
 
-  private ColorMapper mapper = (val) -> {
-    switch (val) {
-    case 0:
-      return Color.WHITE;
-    case 1:
-      return Color.GREEN;
-    case 2:
-      return Color.YELLOW;
-    case 3:
-      return Color.ORANGE;
-    case 4:
-      return Color.RED;
-    default:
-      return Color.BLACK;
-    }
-  };
+  private ColorMapper mapper = new DefaultColorMapper(Configuration.dataRangeSize);
 
   public PatternCtrl() {
     FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("PatternCtrl.fxml"));

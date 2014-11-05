@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import javafx.application.Platform;
@@ -23,8 +25,8 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.paint.Color;
 
+import com.github.thomasfischl.brainintercom.analyzer.ga.Configuration;
 import com.github.thomasfischl.brainintercom.analyzer.ga.GA;
 import com.github.thomasfischl.brainintercom.analyzer.ga.PatternRecognizerProblem;
 import com.github.thomasfischl.brainintercom.analyzer.ga.SimulationModel;
@@ -61,6 +63,10 @@ public class GAView extends AnchorPane {
   private Series<Integer, Integer> avgSol;
   private Series<Integer, Integer> bestSol;
   private UpdaterTask updaterTask;
+
+  private boolean running;
+  private Future<?> gaTask;
+  private ScheduledFuture<?> analyzerTask;
 
   public GAView() {
     FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("GAView.fxml"));
@@ -108,44 +114,44 @@ public class GAView extends AnchorPane {
 
     bestSolPattern = new PatternCtrl(6, true);
     dataPattern = new PatternCtrl(6, false);
-
-    genomePattern = new PatternCtrl(6, true, (val) -> {
-      switch (val) {
-      case 0:
-        return Color.gray(0);
-      case 1:
-        return Color.gray(0.2);
-      case 2:
-        return Color.gray(0.4);
-      case 3:
-        return Color.gray(0.6);
-      case 4:
-        return Color.gray(0.8);
-      case 5:
-        return Color.gray(1);
-      default:
-        System.out.println(val);
-        return Color.RED;
-      }
-    });
-
+    genomePattern = new PatternCtrl(6, true, new GrayColorMapper(Configuration.dataRangeSize));
     patternGroup.getChildren().addAll(bestSolPattern, genomePattern, dataPattern);
   }
 
   @FXML
   private void start(ActionEvent e) {
-    File recFile = new File("./data", cbDataFile.getSelectionModel().getSelectedItem());
-    if (!recFile.isFile()) {
-      throw new RuntimeException("File '" + recFile.getAbsolutePath() + "' does not exists.");
-    }
-    pool.execute(() -> {
-      try {
-        executeGa(recFile);
-      } catch (Exception e1) {
-        e1.printStackTrace();
+    if (running) {
+      btnStart.setText("Start");
+      if (gaTask != null) {
+        gaTask.cancel(true);
+        gaTask = null;
       }
-    });
 
+      if (analyzerTask != null) {
+        analyzerTask.cancel(true);
+        analyzerTask = null;
+      }
+
+      worstSol.getData().clear();
+      avgSol.getData().clear();
+      bestSol.getData().clear();
+      
+      running = false;
+    } else {
+      btnStart.setText("Stop");
+      File recFile = new File("./data", cbDataFile.getSelectionModel().getSelectedItem());
+      if (!recFile.isFile()) {
+        throw new RuntimeException("File '" + recFile.getAbsolutePath() + "' does not exists.");
+      }
+      gaTask = pool.submit(() -> {
+        try {
+          executeGa(recFile);
+        } catch (Exception e1) {
+          e1.printStackTrace();
+        }
+      });
+      running = true;
+    }
   }
 
   public void updateQualityChart(int iteration, int best, int avg, int worst) {
@@ -166,7 +172,7 @@ public class GAView extends AnchorPane {
     ga = new GA(problem);
     updaterTask.setGa(ga);
     GenomeAnalyzer analyzer = new GenomeAnalyzer();
-    pool.scheduleAtFixedRate(() -> updateGenomeView(analyzer, model.getDimension(), model.getWindowSize()), 0, 1, TimeUnit.SECONDS);
+    analyzerTask = pool.scheduleAtFixedRate(() -> updateGenomeView(analyzer, model.getDimension(), model.getWindowSize()), 0, 1, TimeUnit.SECONDS);
     ga.addIterationAnalyzer(analyzer);
     ga.addIterationAnalyzer(new ConsoleIterationAnalyzer());
     ga.run();
@@ -186,7 +192,7 @@ public class GAView extends AnchorPane {
     txt.append("Positive Examples: " + model.getPositiveExamples().size() + "\n");
 
     DataRange range = model.getRange();
-    txt.append("Range            : " + range.getRange1() + "/" + range.getRange2() + "/" + range.getRange3() + "\n");
+    txt.append("Range            : " + range + "\n");
     txt.append("------------------------------------------\n");
     txt.append("Start GA\n");
 
