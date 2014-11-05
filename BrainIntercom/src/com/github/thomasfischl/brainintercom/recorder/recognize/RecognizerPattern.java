@@ -89,4 +89,8 @@ public class RecognizerPattern {
     return size;
   }
 
+  public void setName(String name) {
+    this.name = name;
+  }
+
 }

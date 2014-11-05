@@ -43,6 +43,10 @@ public class GAView extends AnchorPane {
   private HBox patternGroup;
   @FXML
   private TextArea txtData;
+  @FXML
+  private ProgressBar pbFoundMatches;
+  @FXML
+  private ProgressBar pbNumberFreePlaces;
 
   private PatternCtrl bestSolPattern;
   private PatternCtrl genomePattern;
@@ -54,10 +58,6 @@ public class GAView extends AnchorPane {
 
   private boolean running;
 
-  @FXML
-  private ProgressBar pbFoundMatches;
-  @FXML
-  private ProgressBar pbNumberFreePlaces;
   private GAController controller = new GAController(this);
 
   public GAView() {
@@ -84,6 +84,15 @@ public class GAView extends AnchorPane {
     }
     cbDataFile.getSelectionModel().select(0);
 
+    initChart();
+
+    bestSolPattern = new PatternCtrl(6, true);
+    dataPattern = new PatternCtrl(6, false);
+    genomePattern = new PatternCtrl(6, true, new GrayColorMapper(Configuration.dataRangeSize));
+    patternGroup.getChildren().addAll(bestSolPattern, genomePattern, dataPattern);
+  }
+
+  private void initChart() {
     ObservableList<Series<Integer, Integer>> data = chartQuality.getData();
     data.clear();
     worstSol = new Series<Integer, Integer>();
@@ -98,11 +107,6 @@ public class GAView extends AnchorPane {
     qualityChartYAxis.setLowerBound(0);
     qualityChartYAxis.setTickMarkVisible(false);
     qualityChartYAxis.setTickUnit(1000);
-
-    bestSolPattern = new PatternCtrl(6, true);
-    dataPattern = new PatternCtrl(6, false);
-    genomePattern = new PatternCtrl(6, true, new GrayColorMapper(Configuration.dataRangeSize));
-    patternGroup.getChildren().addAll(bestSolPattern, genomePattern, dataPattern);
   }
 
   @FXML
@@ -160,6 +164,11 @@ public class GAView extends AnchorPane {
 
   public void updateTextArea(String text) {
     Platform.runLater(() -> txtData.setText(text));
+  }
+
+  @FXML
+  private void saveBestSolution(ActionEvent e) {
+    controller.saveBestSolution();
   }
 
   public void showRecordedData(int[] viewData, int dimesion, int windowSize) {

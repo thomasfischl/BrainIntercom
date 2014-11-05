@@ -18,20 +18,6 @@ public class RecognizerPatternStore {
   public void storePattern(RecognizerPattern pattern, File f) throws IOException {
     try (BufferedWriter bw = new BufferedWriter(new FileWriter(f))) {
       bw.write(new Gson().toJson(pattern));
-      // // meta data
-      // bw.write(pattern.getName() + ";");
-      // bw.write(pattern.getWindowSize() + ";");
-      // bw.write(pattern.getDimenstion() + ";");
-      // bw.newLine();
-      // // range
-      // bw.write(pattern.getRange().getRange1() + ";");
-      // bw.write(pattern.getRange().getRange2() + ";");
-      // bw.write(pattern.getRange().getRange3() + ";");
-      // bw.newLine();
-      // // mask
-      //
-      // int[] data = pattern.getData();
-
     }
   }
 

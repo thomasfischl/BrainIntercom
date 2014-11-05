@@ -3,6 +3,7 @@ package com.github.thomasfischl.brainintercom.analyzer.ga.iterationanalyzer;
 import java.io.File;
 import java.io.IOException;
 
+import com.github.thomasfischl.brainintercom.analyzer.ga.Configuration;
 import com.github.thomasfischl.brainintercom.analyzer.ga.GA;
 import com.github.thomasfischl.brainintercom.analyzer.ga.Solution;
 import com.github.thomasfischl.brainintercom.recorder.recognize.RecognizerPatternStore;
@@ -24,7 +25,7 @@ public class SolutionSaver implements IIterationAnalyzer {
   private void storePattern(Solution bestSol, int iteration) {
     RecognizerPatternStore store = new RecognizerPatternStore();
     try {
-      store.storePattern(bestSol.getMask(), new File(GA.RESULT_FOLDER, "pattern_" + iteration + ".json"));
+      store.storePattern(bestSol.getMask(), new File(Configuration.RESULT_FOLDER, "pattern_" + iteration + ".json"));
     } catch (IOException e) {
       e.printStackTrace();
     }

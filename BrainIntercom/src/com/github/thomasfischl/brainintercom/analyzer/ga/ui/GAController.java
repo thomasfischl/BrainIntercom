@@ -9,12 +9,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.github.thomasfischl.brainintercom.analyzer.ga.Configuration;
 import com.github.thomasfischl.brainintercom.analyzer.ga.GA;
 import com.github.thomasfischl.brainintercom.analyzer.ga.PatternRecognizerProblem;
 import com.github.thomasfischl.brainintercom.analyzer.ga.SimulationModel;
 import com.github.thomasfischl.brainintercom.analyzer.ga.iterationanalyzer.ConsoleIterationAnalyzer;
 import com.github.thomasfischl.brainintercom.analyzer.ga.iterationanalyzer.GenomeAnalyzer;
 import com.github.thomasfischl.brainintercom.recorder.recognize.DataRange;
+import com.github.thomasfischl.brainintercom.recorder.recognize.RecognizerPattern;
+import com.github.thomasfischl.brainintercom.recorder.recognize.RecognizerPatternStore;
 
 public class GAController {
 
@@ -26,6 +29,7 @@ public class GAController {
   private ScheduledFuture<?> analyzerTask;
   private GAView view;
   private GenomeAnalyzer analyzer = new GenomeAnalyzer();
+  private String currRecDataFile;
 
   public GAController(GAView view) {
     this.view = view;
@@ -47,6 +51,7 @@ public class GAController {
   }
 
   public void startGa(String file) {
+    this.currRecDataFile = file;
     File recFile = new File("./data", file);
     if (!recFile.isFile()) {
       throw new RuntimeException("File '" + recFile.getAbsolutePath() + "' does not exists.");
@@ -105,6 +110,18 @@ public class GAController {
   public void shutdown() {
     if (pool != null) {
       pool.shutdownNow();
+    }
+  }
+
+  public void saveBestSolution() {
+    RecognizerPatternStore store = new RecognizerPatternStore();
+    try {
+      RecognizerPattern pattern = ga.getBestSolution().getMask();
+      String name = currRecDataFile + "_" + System.currentTimeMillis();
+      pattern.setName(name);
+      store.storePattern(pattern, new File(Configuration.PATTERN_FOLDER, name + ".json"));
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 

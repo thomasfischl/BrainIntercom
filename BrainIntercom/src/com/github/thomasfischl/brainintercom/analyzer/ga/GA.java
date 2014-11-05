@@ -16,8 +16,6 @@ import com.google.common.base.Stopwatch;
 
 public class GA {
 
-  public static final String RESULT_FOLDER = "C:/tmp/analyzer/results";
-
   protected Solution[] population;
 
   public static Random rand = new Random();
@@ -190,7 +188,7 @@ public class GA {
     System.out.println("-------------------------------------------");
     System.out.println("Start GA");
 
-    File folder = new File(RESULT_FOLDER);
+    File folder = new File(Configuration.RESULT_FOLDER);
     FileUtil.deleteFolder(folder);
     folder.mkdirs();
 

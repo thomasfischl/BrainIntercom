@@ -32,10 +32,18 @@
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
 							</rowConstraints>
 							<children>
-								<Button fx:id="btnStart" mnemonicParsing="false" onAction="#start" text="Start" GridPane.columnIndex="1" />
+                        <HBox spacing="10.0" GridPane.columnIndex="1">
+                           <children>
+      								<Button fx:id="btnStart" mnemonicParsing="false" onAction="#start" text="Start" GridPane.columnIndex="1" />
+                              <Button mnemonicParsing="false" onAction="#saveBestSolution" text="Save Best Solution" />
+                           </children>
+                           <GridPane.margin>
+                              <Insets />
+                           </GridPane.margin>
+                        </HBox>
 								<ComboBox fx:id="cbDataFile" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-								<Label text="Start GA" />
-								<Label text="Data File" GridPane.rowIndex="1" />
+								<Label text="GA Actions:" />
+								<Label text="Data File:" GridPane.rowIndex="1" />
 								<HBox alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="2">
                            <children>
       								<HBox alignment="CENTER_LEFT">
