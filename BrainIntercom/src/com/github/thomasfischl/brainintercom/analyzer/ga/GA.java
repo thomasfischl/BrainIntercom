@@ -18,8 +18,6 @@ public class GA {
 
   public static final String RESULT_FOLDER = "C:/tmp/analyzer/results";
 
-  protected int populationSize = 500;
-
   protected Solution[] population;
 
   public static Random rand = new Random();
@@ -94,7 +92,7 @@ public class GA {
   // ------------------------------------------------------------------
 
   protected void phaseInit() {
-    population = problem.createInitialPopulation(populationSize);
+    population = problem.createInitialPopulation(Configuration.populationSize);
   }
 
   private void phaseEvalFitness() {
@@ -103,7 +101,7 @@ public class GA {
   }
 
   private void phaseNextGen() {
-    Solution[] newPopulation = new Solution[populationSize];
+    Solution[] newPopulation = new Solution[Configuration.populationSize];
 
     // elitism 1
     newPopulation[0] = population[0];
@@ -111,7 +109,7 @@ public class GA {
     int p2;
 
     // create new population
-    for (int i = 1; i < populationSize; i++) {
+    for (int i = 1; i < Configuration.populationSize; i++) {
       p1 = selectParentWithTournamet(2);
       p2 = selectParentWithTournamet(2);
       newPopulation[i] = problem.cross(population[p1], (population[p2]), iteration);
@@ -122,7 +120,7 @@ public class GA {
   }
 
   private void phaseMutation() {
-    for (int idx = 1; idx < populationSize; idx++) {
+    for (int idx = 1; idx < Configuration.populationSize; idx++) {
       if (rand.nextDouble() < mutationRate) {
         problem.mutate(population[idx], iteration);
       }
@@ -142,12 +140,12 @@ public class GA {
   }
 
   private int selectParentWithTournamet(int size) {
-    int pos = rand.nextInt(populationSize);
+    int pos = rand.nextInt(Configuration.populationSize);
     int fitness = population[pos].getFitness();
     double victoryProbablility = rand.nextDouble();
 
     for (int x = 0; x < size; x++) {
-      int tempPos = rand.nextInt(populationSize);
+      int tempPos = rand.nextInt(Configuration.populationSize);
       int tempFitness = population[tempPos].getFitness();
 
       if (tempFitness < fitness && victoryProbablility > .4) {
@@ -164,10 +162,10 @@ public class GA {
       avgSolutionFitness += sol.getFitness();
     }
 
-    avgSolutionFitness = avgSolutionFitness / populationSize;
+    avgSolutionFitness = avgSolutionFitness / Configuration.populationSize;
     Solution bestSol = population[0];
     bestSolutionFitness = bestSol.getFitness();
-    worstSolutionFitness = population[populationSize - 2].getFitness();
+    worstSolutionFitness = population[Configuration.populationSize - 1].getFitness();
 
     for (IIterationAnalyzer analyzer : iterationAnalyzer) {
       analyzer.analyze(this, iteration, stopwatch);

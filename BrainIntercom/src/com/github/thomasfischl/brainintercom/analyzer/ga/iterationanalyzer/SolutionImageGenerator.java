@@ -24,7 +24,7 @@ public class SolutionImageGenerator implements IIterationAnalyzer {
   private void generatePatternImage(Solution bestSol, int iteration) {
     try {
       int windowSize = bestSol.getMask().getWindowSize();
-      int dimenstion = bestSol.getMask().getDimenstion();
+      int dimenstion = bestSol.getMask().getDimension();
       int[] data = bestSol.getMask().getData();
       ImageGenerator.generateWindowImage(new File(GA.RESULT_FOLDER, "iteration" + iteration + ".png"), windowSize, dimenstion, data);
     } catch (IOException e) {

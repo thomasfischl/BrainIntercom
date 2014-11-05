@@ -2,12 +2,6 @@ package com.github.thomasfischl.brainintercom.analyzer.ga.ui;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -21,18 +15,15 @@ import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 
 import com.github.thomasfischl.brainintercom.analyzer.ga.Configuration;
-import com.github.thomasfischl.brainintercom.analyzer.ga.GA;
-import com.github.thomasfischl.brainintercom.analyzer.ga.PatternRecognizerProblem;
-import com.github.thomasfischl.brainintercom.analyzer.ga.SimulationModel;
-import com.github.thomasfischl.brainintercom.analyzer.ga.iterationanalyzer.ConsoleIterationAnalyzer;
+import com.github.thomasfischl.brainintercom.analyzer.ga.Solution;
 import com.github.thomasfischl.brainintercom.analyzer.ga.iterationanalyzer.GenomeAnalyzer;
-import com.github.thomasfischl.brainintercom.recorder.recognize.DataRange;
 
 public class GAView extends AnchorPane {
 
@@ -57,16 +48,17 @@ public class GAView extends AnchorPane {
   private PatternCtrl genomePattern;
   private PatternCtrl dataPattern;
 
-  private ScheduledExecutorService pool;
-  private GA ga;
   private Series<Integer, Integer> worstSol;
   private Series<Integer, Integer> avgSol;
   private Series<Integer, Integer> bestSol;
-  private UpdaterTask updaterTask;
 
   private boolean running;
-  private Future<?> gaTask;
-  private ScheduledFuture<?> analyzerTask;
+
+  @FXML
+  private ProgressBar pbFoundMatches;
+  @FXML
+  private ProgressBar pbNumberFreePlaces;
+  private GAController controller = new GAController(this);
 
   public GAView() {
     FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("GAView.fxml"));
@@ -78,10 +70,6 @@ public class GAView extends AnchorPane {
       throw new IllegalStateException(e);
     }
     initUi();
-
-    pool = Executors.newScheduledThreadPool(2);
-    updaterTask = new UpdaterTask(this, bestSolPattern);
-    pool.scheduleAtFixedRate(() -> updaterTask.execute(), 0, 100, TimeUnit.MILLISECONDS);
 
   }
 
@@ -109,7 +97,6 @@ public class GAView extends AnchorPane {
     qualityChartYAxis.setUpperBound(60000);
     qualityChartYAxis.setLowerBound(0);
     qualityChartYAxis.setTickMarkVisible(false);
-    // qualityChartYAxis.setTickLabelsVisible(false);
     qualityChartYAxis.setTickUnit(1000);
 
     bestSolPattern = new PatternCtrl(6, true);
@@ -121,40 +108,28 @@ public class GAView extends AnchorPane {
   @FXML
   private void start(ActionEvent e) {
     if (running) {
+      controller.stopGa();
       btnStart.setText("Start");
-      if (gaTask != null) {
-        gaTask.cancel(true);
-        gaTask = null;
-      }
-
-      if (analyzerTask != null) {
-        analyzerTask.cancel(true);
-        analyzerTask = null;
-      }
-
-      worstSol.getData().clear();
-      avgSol.getData().clear();
-      bestSol.getData().clear();
-      
       running = false;
+
     } else {
+      reset();
       btnStart.setText("Stop");
-      File recFile = new File("./data", cbDataFile.getSelectionModel().getSelectedItem());
-      if (!recFile.isFile()) {
-        throw new RuntimeException("File '" + recFile.getAbsolutePath() + "' does not exists.");
-      }
-      gaTask = pool.submit(() -> {
-        try {
-          executeGa(recFile);
-        } catch (Exception e1) {
-          e1.printStackTrace();
-        }
-      });
       running = true;
+      controller.startGa(cbDataFile.getSelectionModel().getSelectedItem());
     }
   }
 
-  public void updateQualityChart(int iteration, int best, int avg, int worst) {
+  private void reset() {
+    worstSol.getData().clear();
+    avgSol.getData().clear();
+    bestSol.getData().clear();
+
+    pbFoundMatches.setProgress(0);
+    pbNumberFreePlaces.setProgress(0);
+  }
+
+  public void updateState(int iteration, int best, int avg, int worst) {
     worstSol.getData().add(new Data<>(iteration, worst));
     avgSol.getData().add(new Data<>(iteration, avg));
     bestSol.getData().add(new Data<>(iteration, best));
@@ -163,58 +138,32 @@ public class GAView extends AnchorPane {
     qualityChartYAxis.setUpperBound(upperBound);
   }
 
-  public void executeGa(File recFile) throws IOException {
-    SimulationModel model = new SimulationModel(20, 30, recFile, 25);
-    showModelMetaData(model);
-    showRecordedData(model);
-
-    PatternRecognizerProblem problem = new PatternRecognizerProblem(model);
-    ga = new GA(problem);
-    updaterTask.setGa(ga);
-    GenomeAnalyzer analyzer = new GenomeAnalyzer();
-    analyzerTask = pool.scheduleAtFixedRate(() -> updateGenomeView(analyzer, model.getDimension(), model.getWindowSize()), 0, 1, TimeUnit.SECONDS);
-    ga.addIterationAnalyzer(analyzer);
-    ga.addIterationAnalyzer(new ConsoleIterationAnalyzer());
-    ga.run();
-  }
-
-  private void updateGenomeView(GenomeAnalyzer analyzer, int dimension, int windowSize) {
+  public void updateGenomeView(GenomeAnalyzer analyzer, int dimension, int windowSize) {
     if (analyzer.getGenomes() != null) {
       Platform.runLater(() -> genomePattern.update(analyzer.getGenomes(), dimension, windowSize));
     }
   }
 
-  private void showModelMetaData(SimulationModel model) {
-    StringBuffer txt = new StringBuffer();
-    txt.append("Loading Model finished\n");
-    txt.append("Windows:           " + model.getWindows().size() + "\n");
-    txt.append("Negative Examples: " + model.getNegativeExamples().size() + "\n");
-    txt.append("Positive Examples: " + model.getPositiveExamples().size() + "\n");
-
-    DataRange range = model.getRange();
-    txt.append("Range            : " + range + "\n");
-    txt.append("------------------------------------------\n");
-    txt.append("Start GA\n");
-
-    Platform.runLater(() -> txtData.setText(txt.toString()));
-  }
-
-  private void showRecordedData(SimulationModel model) {
-    List<int[]> data = model.getData();
-
-    int[] viewData = new int[data.size() * model.getDimension()];
-    for (int row = 0; row < data.size(); row++) {
-      for (int col = 0; col < model.getDimension(); col++) {
-        viewData[(row * model.getDimension()) + col] = data.get(row)[col];
-      }
-    }
-    Platform.runLater(() -> dataPattern.update(viewData, model.getDimension(), data.size()));
-  }
-
   public void stop() {
-    if (pool != null) {
-      pool.shutdownNow();
-    }
+    controller.shutdown();
+  }
+
+  public void updateBestSolutions(int[] data, int dimension, int windowSize, Solution bestSolution) {
+    bestSolPattern.update(data, dimension, windowSize);
+
+    double positveWindows = bestSolution.getMissingPositivMatch() + bestSolution.getPositivMatch();
+    pbFoundMatches.setProgress((double) bestSolution.getPositivMatch() / positveWindows);
+
+    double size = bestSolution.getMask().getSize();
+    pbNumberFreePlaces.setProgress((double) bestSolution.getNumberOfFreePlaces() / size);
+  }
+
+  public void updateTextArea(String text) {
+    Platform.runLater(() -> txtData.setText(text));
+  }
+
+  public void showRecordedData(int[] viewData, int dimesion, int windowSize) {
+    Platform.runLater(() -> dataPattern.update(viewData, dimesion, windowSize));
   }
 
 }

@@ -77,7 +77,7 @@ public class RecognizerPattern {
     return name;
   }
 
-  public int getDimenstion() {
+  public int getDimension() {
     return dimenstion;
   }
 

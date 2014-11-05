@@ -15,6 +15,8 @@ public class Solution implements Comparable<Solution> {
 
   protected RecognizerPattern mask;
 
+  private int positivMatch;
+
   public Solution(int dimension, int windowSize, DataRange range) {
     mask = new RecognizerPattern("", dimension, windowSize, range);
   }
@@ -49,7 +51,7 @@ public class Solution implements Comparable<Solution> {
   }
 
   public Solution cross(Solution solution) {
-    Solution newSolution = new Solution(mask.getDimenstion(), mask.getWindowSize(), mask.getRange());
+    Solution newSolution = new Solution(mask.getDimension(), mask.getWindowSize(), mask.getRange());
 
     int cutPoint = GA.rand.nextInt(mask.getSize());
 
@@ -80,17 +82,6 @@ public class Solution implements Comparable<Solution> {
   }
 
   public void mutate(int iteration) {
-    // int[] data = mask.getData();
-
-    // for (int i = 0; i < 2; i++) {
-    // int idx = GA.rand.nextInt(mask.getSize());
-    // data[idx] = 0;
-    // }
-    // for (int i = 0; i < mask.getSize() * 0.1; i++) {
-    // int idx = GA.rand.nextInt(mask.getSize());
-    // data[idx] = GA.rand.nextInt(Configuration.dataRangeSize - 1);
-    // }
-
     if (iteration < 180) {
       muteateYoungGeneration();
     } else {
@@ -127,12 +118,25 @@ public class Solution implements Comparable<Solution> {
   }
 
   public void calcFitness(int positivMatch, int negativMatch, int missingPositivMatch, int totalMinMaskDiff) {
+    this.positivMatch = positivMatch;
     this.negativMatch = negativMatch;
     this.missingPositivMatch = missingPositivMatch;
 
     int fitness = (missingPositivMatch * 300) + (negativMatch * 100) + (totalMinMaskDiff * 1);
     fitness += getNumberOfFreePlaces();
     setFitness(fitness);
+  }
+
+  public int getMissingPositivMatch() {
+    return missingPositivMatch;
+  }
+
+  public int getPositivMatch() {
+    return positivMatch;
+  }
+
+  public int getNegativMatch() {
+    return negativMatch;
   }
 
   @Override

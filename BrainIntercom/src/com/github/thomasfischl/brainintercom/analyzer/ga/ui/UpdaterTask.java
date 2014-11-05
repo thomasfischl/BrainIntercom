@@ -3,6 +3,7 @@ package com.github.thomasfischl.brainintercom.analyzer.ga.ui;
 import javafx.application.Platform;
 
 import com.github.thomasfischl.brainintercom.analyzer.ga.GA;
+import com.github.thomasfischl.brainintercom.analyzer.ga.iterationanalyzer.GenomeAnalyzer;
 import com.github.thomasfischl.brainintercom.recorder.recognize.RecognizerPattern;
 
 public class UpdaterTask {
@@ -10,11 +11,11 @@ public class UpdaterTask {
   private GA ga;
   private GAView view;
   private int lastIteration = -1;
-  private PatternCtrl bestSolCanvas;
+  private GenomeAnalyzer analyzer;
 
-  public UpdaterTask(GAView view, PatternCtrl bestSolPattern) {
-    this.view = view;
-    this.bestSolCanvas = bestSolPattern;
+  public UpdaterTask(GAView ctrl, GenomeAnalyzer analyzer) {
+    this.view = ctrl;
+    this.analyzer = analyzer;
   }
 
   public void execute() {
@@ -26,9 +27,13 @@ public class UpdaterTask {
     }
 
     Platform.runLater(() -> {
-      view.updateQualityChart(ga.getIteration(), ga.getBestSolutionFitness(), ga.getAvgSolutionFitness(), ga.getWorstSolutionFitness());
       RecognizerPattern mask = ga.getBestSolution().getMask();
-      bestSolCanvas.update(mask.getData(), mask.getDimenstion(), mask.getWindowSize());
+      int dimension = mask.getDimension();
+      int windowSize = mask.getWindowSize();
+
+      view.updateState(ga.getIteration(), ga.getBestSolutionFitness(), ga.getAvgSolutionFitness(), ga.getWorstSolutionFitness());
+      view.updateBestSolutions(mask.getData(), dimension, windowSize, ga.getBestSolution() );
+      view.updateGenomeView(analyzer, dimension, windowSize);
     });
 
     lastIteration = ga.getIteration();

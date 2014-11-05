@@ -14,9 +14,14 @@ public class GenomeAnalyzer implements IIterationAnalyzer {
 
   @Override
   public void analyze(GA ga, int iteration, Stopwatch duration) {
-     if (counter % 2 == 0) {
-    analyzeGenome(ga.getPopulation());
-     }
+    if (counter % 2 == 0) {
+      analyzeGenome(ga.getPopulation());
+    }
+    counter++;
+  }
+
+  public void clear() {
+    genomes = null;
     counter++;
   }
 

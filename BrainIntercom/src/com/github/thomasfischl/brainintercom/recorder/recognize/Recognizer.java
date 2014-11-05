@@ -57,7 +57,7 @@ public class Recognizer {
   public void addPattern(RecognizerPattern pattern) {
     synchronized (monitor) {
       if (patterns.isEmpty()) {
-        dimenstion = pattern.getDimenstion();
+        dimenstion = pattern.getDimension();
         windowSize = pattern.getWindowSize();
       }
       pattern.init();
